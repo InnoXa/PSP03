@@ -3,7 +3,7 @@ package applet;
 import java.applet.Applet;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +23,7 @@ public class Principal extends Applet implements Runnable {
     Lanzador jugador1;
     Lanzador jugador2;
     BufferedImage cesta;
+    int posXCesta; 
     
     ArrayList<BufferedImage> imagenesJ1 = new ArrayList<>();
     ArrayList<BufferedImage> imagenesJ2 = new ArrayList<>();
@@ -44,9 +45,12 @@ public class Principal extends Applet implements Runnable {
 
         try {
             pokeball = new Bola(ImageIO.read(new File("src/Imagenes/poke.png")), 500, 300);
+            cesta = ImageIO.read(new File("src/Imagenes/Cesta.png"));
         } catch (IOException ex) {
             Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        posXCesta = ANCHOVENTAJUEGO - cesta.getWidth()/2;
         
         
         for(int i = 0; i < 5; i++){
@@ -72,6 +76,20 @@ public class Principal extends Applet implements Runnable {
 
         //COMO SE HA DESCRITO ANTES, HACIENDO ESTO SE GUARDARÁ EN offscreen TODO LO QUE SE ESCRIBA EN dobleBuffer
         g2d = backBuffer.createGraphics();
+        
+        this.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+
+            @Override
+            public void mouseMoved(MouseEvent e){
+                if(e.getX() < jugador1.getImgActual().getWidth() + cesta.getWidth()/2){
+                    posXCesta = jugador1.getImgActual().getWidth();
+                }else if(e.getX() + cesta.getWidth()/2 > ANCHOVENTAJUEGO - jugador2.getImgActual().getWidth()){
+                    posXCesta = ANCHOVENTAJUEGO - jugador2.getImgActual().getWidth() - cesta.getWidth();
+                }else{  
+                    posXCesta = e.getX() - cesta.getWidth()/2;
+                }
+            }
+        });
 
         fondo = new Fondo();
     }
@@ -103,6 +121,7 @@ public class Principal extends Applet implements Runnable {
 
         g2d.drawImage(jugador1.getImgActual(), jugador1.getX(), jugador1.getY(), this);
         g2d.drawImage(jugador2.getImgActual(), jugador2.getX(), jugador2.getY(), this);
+        g2d.drawImage(cesta, posXCesta, ALTOVENTAJUEGO - cesta.getHeight(), this);
         
         //g2d.fill3DRect(100, 100, 100, 100, false);
         
