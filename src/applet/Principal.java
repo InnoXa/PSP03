@@ -2,6 +2,7 @@ package applet;
 
 import java.applet.Applet;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -27,10 +28,10 @@ public class Principal extends Applet implements Runnable {
     ArrayList<BufferedImage> imagenesJ2 = new ArrayList<>();
 
     //PARA DIBUJAR LAS IMAGENES EN ESTE OBJETO EN LUGAR DE EN LA PANTALLA DE GRAPHICS
-    Graphics dobleBuffer;
+    Graphics2D g2d;
 
     //IMAGEN QUE CONTENDRÁ TODO LO QUE SE DIBUJARÁ EN dobleBuffer
-    Image offscreen;
+    BufferedImage backBuffer;
 
     final int ALTOVENTAJUEGO = 800;
     final int ANCHOVENTAJUEGO = 1000;
@@ -67,10 +68,10 @@ public class Principal extends Applet implements Runnable {
         pokeball.start();
 
         //IGUALA EL TAMAÑO DE offscreen AL DEL APPLET
-        offscreen = createImage(1000, 800);
+        backBuffer = new BufferedImage(ANCHOVENTAJUEGO, ALTOVENTAJUEGO, BufferedImage.TYPE_INT_RGB);
 
         //COMO SE HA DESCRITO ANTES, HACIENDO ESTO SE GUARDARÁ EN offscreen TODO LO QUE SE ESCRIBA EN dobleBuffer
-        dobleBuffer = offscreen.getGraphics();
+        g2d = backBuffer.createGraphics();
 
         fondo = new Fondo();
     }
@@ -88,9 +89,9 @@ public class Principal extends Applet implements Runnable {
     public synchronized void paint(Graphics g) {
 
         //SE LIMPIA TODO EL BUFFER ANTES DE PINTAR DE NUEVO PARA QUE NO LO HAGA ENCIMA
-        dobleBuffer.clearRect(0, 0, 1000, 800);
+        g2d.clearRect(0, 0, 1000, 800);
 
-        dobleBuffer.drawImage(fondo.getImagenActual(), 0, 0, this);
+        g2d.drawImage(fondo.getImagenActual(), 0, 0, this);
 
         /*double locationX = pokeball.getImg().getWidth() / 2;
         double locationY = pokeball.getImg().getHeight() / 2;
@@ -100,11 +101,13 @@ public class Principal extends Applet implements Runnable {
         AffineTransform tx = AffineTransform.getRotateInstance(rotacion, locationX, locationY);
         AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);*/
 
-        dobleBuffer.drawImage(jugador1.getImgActual(), jugador1.getX(), jugador1.getY(), this);
-        dobleBuffer.drawImage(jugador2.getImgActual(), jugador2.getX(), jugador2.getY(), this);
+        g2d.drawImage(jugador1.getImgActual(), jugador1.getX(), jugador1.getY(), this);
+        g2d.drawImage(jugador2.getImgActual(), jugador2.getX(), jugador2.getY(), this);
         
-        dobleBuffer.drawImage(/*op.filter(*/pokeball.getImg()/*, null)*/, pokeball.getPosX(), pokeball.getPosY(), this);
-        g.drawImage(offscreen, 0, 0, this);
+        //g2d.fill3DRect(100, 100, 100, 100, false);
+        
+        g2d.drawImage(/*op.filter(*/pokeball.getImg()/*, null)*/, pokeball.getPosX(), pokeball.getPosY(), this);
+        g.drawImage(backBuffer, 0, 0, this);
     }
 
     @Override
