@@ -1,21 +1,12 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package applet;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Iterator;
 
-/**
- *
- * @author alumno
- */
-public class Lanzador extends Thread {
+public class Lanzador extends Thread implements Runnable{
     int x, y, imgActual;
     ArrayList<BufferedImage> imagenes;
+    boolean activo;
     private volatile Thread hilo;
 
     public Lanzador(int x, int y, ArrayList<BufferedImage> imagenes) {
@@ -23,6 +14,7 @@ public class Lanzador extends Thread {
         this.y = y;
         imgActual = 0;
         this.imagenes = imagenes;
+        activo = false;
         
         hilo = new Thread(this);
     }
@@ -35,6 +27,10 @@ public class Lanzador extends Thread {
         return y;
     }
     
+    public int getIndiceImg() {
+        return imgActual;
+    }
+    
     public BufferedImage getImgActual() {
         return imagenes.get(imgActual);
     }
@@ -43,12 +39,43 @@ public class Lanzador extends Thread {
         return imagenes;
     }
     
+    public void activar(){
+        activo = true;
+    }
+    
+    public void reiniciarIndice(){
+        imgActual = 0;
+    }
+    
+    public void avanzar(){
+        switch(imgActual){
+            case 0:
+                imgActual = 1;
+                break;
+            case 1:
+                imgActual = 2;
+                break;
+            case 2:
+                imgActual = 3;
+                break;
+            case 3:
+                imgActual = 4;
+                break;
+            case 4:
+                imgActual = 0;
+                activo = false;
+        }
+    }
+    
     @Override
     public void run() {
         Thread hiloActual = Thread.currentThread();
         hilo = hiloActual;
 
         while (hilo == hiloActual) {
+            if(activo){
+                avanzar();
+            }
             pausa(150);
         }
     }
@@ -59,5 +86,5 @@ public class Lanzador extends Thread {
         } catch (InterruptedException e) {
             System.err.println(e);
         }
-    }    
+    }
 }

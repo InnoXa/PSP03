@@ -34,8 +34,11 @@ public class Principal extends Applet implements Runnable {
     //IMAGEN QUE CONTENDRÁ TODO LO QUE SE DIBUJARÁ EN dobleBuffer
     BufferedImage backBuffer;
 
-    final int ALTOVENTAJUEGO = 800;
-    final int ANCHOVENTAJUEGO = 1000;
+    //final int ALTOVENTAJUEGO = 800;
+    //final int ANCHOVENTAJUEGO = 1000;
+    
+    final int ALTOVENTAJUEGO = 600;
+    final int ANCHOVENTAJUEGO = 800;
     
     @Override
     public void init() {
@@ -88,6 +91,15 @@ public class Principal extends Applet implements Runnable {
                 }else{  
                     posXCesta = e.getX() - cesta.getWidth()/2;
                 }
+            }
+        });
+        
+        this.addMouseListener(new java.awt.event.MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e){
+                jugador1.activar();
+                jugador2.activar();
             }
         });
 
