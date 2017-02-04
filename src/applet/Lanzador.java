@@ -57,6 +57,7 @@ public class Lanzador extends Thread implements Runnable{
                 break;
             case 2:
                 imgActual = 3;
+                Principal.generarBola();
                 break;
             case 3:
                 imgActual = 4;

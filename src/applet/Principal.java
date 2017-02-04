@@ -1,24 +1,34 @@
 package applet;
 
 import java.applet.Applet;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import javax.swing.text.StyleConstants;
 
 public class Principal extends Applet implements Runnable {
 
     Thread hilo;
     Fondo fondo;
+    int comienzo;
 
-    Bola pokeball;
     double rotacion;
+    int puntuacion = 0;
+    int vidas = 10;
+    private int FPS = 0;
     
     Lanzador jugador1;
     Lanzador jugador2;
@@ -47,7 +57,6 @@ public class Principal extends Applet implements Runnable {
         
 
         try {
-            pokeball = new Bola(ImageIO.read(new File("src/Imagenes/poke.png")), 500, 300);
             cesta = ImageIO.read(new File("src/Imagenes/Cesta.png"));
         } catch (IOException ex) {
             Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
@@ -72,7 +81,6 @@ public class Principal extends Applet implements Runnable {
         
         jugador1.start();
         jugador2.start();
-        pokeball.start();
 
         //IGUALA EL TAMAÑO DE offscreen AL DEL APPLET
         backBuffer = new BufferedImage(ANCHOVENTAJUEGO, ALTOVENTAJUEGO, BufferedImage.TYPE_INT_RGB);
@@ -123,22 +131,36 @@ public class Principal extends Applet implements Runnable {
 
         g2d.drawImage(fondo.getImagenActual(), 0, 0, this);
 
-        /*double locationX = pokeball.getImg().getWidth() / 2;
-        double locationY = pokeball.getImg().getHeight() / 2;
+        Iterator<Bola> itb = ListaBolas.bolas.iterator();
+        while (itb.hasNext()) {
+            Bola b = itb.next();
+            
+            double locationX = b.getImg().getWidth() / 2;
+            double locationY = b.getImg().getHeight() / 2;
 
-        rotacion = Math.toRadians(pokeball.getGrados());
+            rotacion = Math.toRadians(b.getGrados());
 
-        AffineTransform tx = AffineTransform.getRotateInstance(rotacion, locationX, locationY);
-        AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);*/
+            AffineTransform tx = AffineTransform.getRotateInstance(rotacion, locationX, locationY);
+            AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
+            
+            g2d.drawImage(op.filter(b.getImg(), null), b.getPosX(), b.getPosY(), this);
+        }
 
         g2d.drawImage(jugador1.getImgActual(), jugador1.getX(), jugador1.getY(), this);
         g2d.drawImage(jugador2.getImgActual(), jugador2.getX(), jugador2.getY(), this);
         g2d.drawImage(cesta, posXCesta, ALTOVENTAJUEGO - cesta.getHeight(), this);
         
-        //g2d.fill3DRect(100, 100, 100, 100, false);
+        g2d.setColor(Color.RED);
+        g2d.fillRect(45, 35, 220, 75);
+        g2d.setColor(Color.BLACK);
+        g2d.fillRect(50, 40, 210, 65);
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Monaco", StyleConstants.ALIGN_CENTER | Font.BOLD, 26));
+        g2d.drawString("Puntuación: "+puntuacion, 60, 65);
+        g2d.drawString("Vidas: "+vidas, 60, 95);
         
-        g2d.drawImage(/*op.filter(*/pokeball.getImg()/*, null)*/, pokeball.getPosX(), pokeball.getPosY(), this);
         g.drawImage(backBuffer, 0, 0, this);
+        FPS++;
     }
 
     @Override
@@ -148,12 +170,69 @@ public class Principal extends Applet implements Runnable {
 
     @Override
     public void run() {
+        final int MS_POR_SEGUNDO = 1000;
+        final byte FPS_OBJETIVO = 20;
+        final int MS_POR_ACTUALIZACION = MS_POR_SEGUNDO/FPS_OBJETIVO;
+        long referenciaContador = System.currentTimeMillis();
         Thread hiloActual = Thread.currentThread(); //Devuelve el hilo que está actualmente en ejecución.
+        
         while (hilo == hiloActual) {
 
-            //imgActual = mario_img[0];
             repaint();  // Llamada a los métodos update y paint(Graphics).
-
+            pausa(MS_POR_ACTUALIZACION);
+            
+            comienzo = generarAleatorio(10, 0);
+            if (comienzo == 5) {
+                jugador1.activar();
+            }
+            
+            if(System.currentTimeMillis() - referenciaContador > MS_POR_SEGUNDO){
+                showStatus("FPS: "+FPS);
+                FPS = 0;
+                referenciaContador = System.currentTimeMillis();
+            }
         }
+    }
+    
+    void pausa(int tiempo) {
+        try {
+            Thread.sleep(tiempo);     //Envia el hilo a dormir
+        } catch (InterruptedException e) {
+            System.err.println(e);
+        }
+    }
+    
+    public static int generarAleatorio(int max, int min) {
+        Random rand = new Random();
+        return rand.nextInt((max - min) + 1) + min;
+    }
+
+    public synchronized static void generarBola() {
+        int random = generarAleatorio(10, 1);
+        String tipo;
+        
+        switch(random){
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                tipo = "poke";
+                break;
+            case 5:
+            case 6:
+            case 7:
+                tipo = "super";
+                break;
+            case 8:
+            case 9:
+                tipo = "ultra";
+                break;
+            default:
+                tipo = "master";
+        }
+        
+        Bola b = new Bola(tipo, 50, 500);
+        ListaBolas.bolas.add(b);
+        b.start();
     }
 }
