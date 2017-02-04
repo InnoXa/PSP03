@@ -1,14 +1,18 @@
 package applet;
 
+import java.applet.Applet;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import javax.sound.midi.Receiver;
 
 public class Bola extends Thread{
+    int codigoJugador;
     private BufferedImage imagen;
     private int posX;
     private int posY;
@@ -21,9 +25,12 @@ public class Bola extends Thread{
     private double inclinacion;
     private static final double GRAVEDAD = 9.81;
 
+    private Rectangle rectangulo;
+    
     private volatile Thread hilo;
 
-    public Bola(String imagen, int posX, int posY) {
+    public Bola(int codigoJugador, String imagen, int posX, int posY, double velocidad, double inclinacion) {
+        this.codigoJugador = codigoJugador;
         
         try {
             this.imagen = ImageIO.read(new File("src/Imagenes/"+imagen+".png"));
@@ -34,6 +41,9 @@ public class Bola extends Thread{
         this.posX = posX;
         this.posY = posY;
         grados = 0;
+        
+        this.velocidad = velocidad;
+        this.inclinacion = inclinacion;
 
         hilo = new Thread(this);
     }
@@ -53,16 +63,20 @@ public class Bola extends Thread{
     public int getGrados() {
         return grados;
     }
+    
+    public Rectangle getRectangulo(){
+        return new Rectangle(posX, posY, getImg().getWidth(), getImg().getHeight());
+    }
 
     @Override
     public void run() {
         Thread hiloActual = Thread.currentThread();
         hilo = hiloActual;
 
-        cargar(30, 45);
+        cargar(velocidad, inclinacion);
         
         try{
-            while (mover(30)) {
+            while (mover(30) && hilo == hiloActual) {
                 pausa(30);
 
                 grados += 40;
@@ -72,6 +86,8 @@ public class Bola extends Thread{
         } catch (Throwable ex) {
             
         }
+        
+        ListaBolas.bolas.remove(this);
     }
     
     public boolean mover(int tiempo) throws Throwable {
@@ -80,54 +96,41 @@ public class Bola extends Thread{
 
         velY = velY - (GRAVEDAD * tiempo / 10000);
 
-        //SI SE GOLPEA CON EL TABLERO
-        /*if(rebote(pantalla.getTablero())){
+        //SI SE GOLPEA CON OTRA BOLA
+        if(rebote()){
             velX = -velX;
-        }*/
+        }
+        
+        if(getPosY() > Principal.ALTOVENTAJUEGO - getImg().getHeight()){
+            velY /= ((velY - (GRAVEDAD * tiempo / 10000)) - 0.1);
+        }
         
         return !finMovimiento();
-
     }
     
-    /*public boolean rebote(Elemento tablero){
-        Rectangle recBalon = new Rectangle(getPosX(), getPosY(), getAncho(), getAlto());
-        Rectangle recTablero = new Rectangle(tablero.getPosX(), tablero.getPosY(), 10, getAlto());
+    public synchronized boolean rebote(){
+        Bola b;
         
-        return recBalon.intersects(recTablero);
-    }*/
+        Iterator<Bola> itb = ListaBolas.bolas.iterator();
+        while (itb.hasNext()) {
+            b = itb.next();
+            
+            if(b != this){
+                return this.getRectangulo().intersects(b.getRectangulo());
+            }
+        }
+        return false;
+    }
     
     public boolean finMovimiento() throws Throwable{
         //SI SE SALE DE LA PANTALLA POR CUALQUIER LADO EXCEPTO POR ARRIBA
-        if(getPosX() < 0 || getPosX() > 800 || getPosY() > 600){
-            //VUELVE A SU POSICION ORIGINAL
-            //reset();
+        if(getPosX() < -getImg().getWidth() || getPosX() > Principal.ANCHOVENTAJUEGO || getPosY() > Principal.ALTOVENTAJUEGO){
+            Principal.vidas--;
             return true;
-        }else{
-            //SI HA METIDO CANASTA
-            /*if(comprobarCanasta(pantalla.getCanasta())){
-                //VUELVE A SU POSICION ORIGINAL
-                reset();
-                return true;
-            }*/
-        }
-        return false;
-    }
-    
-    /*public boolean comprobarCanasta(Elemento canasta) throws Throwable{
-        //SI ESTA CAYENDO
-        if(velY < 0){
-            Rectangle recBalon = new Rectangle(getPosX(), getPosY(), getAncho(), 10);
-            Rectangle recCanasta = new Rectangle(canasta.getPosX()+30, canasta.getPosY(), canasta.getAncho()-30, 10);
-
-            if(recBalon.intersects(recCanasta)){
-                //PUNTUAR SEGUN LA DISTANCIA
-                pantalla.encestar();
-                return true;
-            }
         }
         
         return false;
-    }*/
+    }
 
     //CARGAR LA POTENCIA E INCLINACION DE LA PELOTA
     public void cargar(double vel, double inclinacion) {
@@ -135,6 +138,9 @@ public class Bola extends Thread{
         this.velocidad = vel / 10;
 
         velX = velocidad * Math.cos(inclinacion);
+        if(codigoJugador == 2){
+            velX = -velX;
+        }
         velY = velocidad * Math.sin(inclinacion);
 
         this.inclinacion = inclinacion;
@@ -148,19 +154,7 @@ public class Bola extends Thread{
         }
     }
 
-    /*public void parar() {
-
+    public synchronized void parar() {
         hilo = null;
-
-        Iterator<Fruta> itf = frutas.iterator();
-
-        while (itf.hasNext()) {
-            Fruta fruta = itf.next();
-
-            if (fruta == this) {
-                itf.remove();
-                break;
-            }
-        }
-    }*/
+    }
 }

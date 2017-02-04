@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
@@ -23,11 +24,11 @@ public class Principal extends Applet implements Runnable {
 
     Thread hilo;
     Fondo fondo;
-    int comienzo;
+    int comienzo, jugadorElegido;
 
     double rotacion;
-    int puntuacion = 0;
-    int vidas = 10;
+    static int puntuacion = 0;
+    static int vidas = 10;
     private int FPS = 0;
     
     Lanzador jugador1;
@@ -47,8 +48,16 @@ public class Principal extends Applet implements Runnable {
     //final int ALTOVENTAJUEGO = 800;
     //final int ANCHOVENTAJUEGO = 1000;
     
-    final int ALTOVENTAJUEGO = 600;
-    final int ANCHOVENTAJUEGO = 800;
+    static final int ALTOVENTAJUEGO = 600;
+    static final int ANCHOVENTAJUEGO = 800;
+    
+    public BufferedImage getCesta(){
+        return cesta;
+    }
+    
+    public int getPosXCesta(){
+        return posXCesta;
+    }
     
     @Override
     public void init() {
@@ -74,9 +83,9 @@ public class Principal extends Applet implements Runnable {
             }
         }
         
-        jugador1 = new Lanzador(0, ALTOVENTAJUEGO - imagenesJ1.get(0).getHeight(), imagenesJ1);
+        jugador1 = new Lanzador(0, ALTOVENTAJUEGO - imagenesJ1.get(0).getHeight(), 1, imagenesJ1);
         jugador2 = new Lanzador(ANCHOVENTAJUEGO - imagenesJ2.get(0).getWidth(), 
-                                ALTOVENTAJUEGO - imagenesJ2.get(0).getHeight(),
+                                ALTOVENTAJUEGO - imagenesJ2.get(0).getHeight(), 2,
                                 imagenesJ2);
         
         jugador1.start();
@@ -102,14 +111,14 @@ public class Principal extends Applet implements Runnable {
             }
         });
         
-        this.addMouseListener(new java.awt.event.MouseAdapter() {
+        /*this.addMouseListener(new java.awt.event.MouseAdapter() {
 
             @Override
             public void mouseClicked(MouseEvent e){
                 jugador1.activar();
                 jugador2.activar();
             }
-        });
+        });*/
 
         fondo = new Fondo();
     }
@@ -131,9 +140,10 @@ public class Principal extends Applet implements Runnable {
 
         g2d.drawImage(fondo.getImagenActual(), 0, 0, this);
 
+        Bola b;
         Iterator<Bola> itb = ListaBolas.bolas.iterator();
         while (itb.hasNext()) {
-            Bola b = itb.next();
+            b = itb.next();
             
             double locationX = b.getImg().getWidth() / 2;
             double locationY = b.getImg().getHeight() / 2;
@@ -142,6 +152,12 @@ public class Principal extends Applet implements Runnable {
 
             AffineTransform tx = AffineTransform.getRotateInstance(rotacion, locationX, locationY);
             AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
+            
+            if(new Rectangle(b.getPosX(), b.getPosY(), b.getImg().getWidth(), 10).intersects(
+            new Rectangle(posXCesta+30, ALTOVENTAJUEGO - cesta.getHeight(), cesta.getWidth()-30, 10))){
+                b.parar();
+                puntuacion++;
+            }
             
             g2d.drawImage(op.filter(b.getImg(), null), b.getPosX(), b.getPosY(), this);
         }
@@ -171,7 +187,7 @@ public class Principal extends Applet implements Runnable {
     @Override
     public void run() {
         final int MS_POR_SEGUNDO = 1000;
-        final byte FPS_OBJETIVO = 20;
+        final byte FPS_OBJETIVO = 50;
         final int MS_POR_ACTUALIZACION = MS_POR_SEGUNDO/FPS_OBJETIVO;
         long referenciaContador = System.currentTimeMillis();
         Thread hiloActual = Thread.currentThread(); //Devuelve el hilo que está actualmente en ejecución.
@@ -181,9 +197,15 @@ public class Principal extends Applet implements Runnable {
             repaint();  // Llamada a los métodos update y paint(Graphics).
             pausa(MS_POR_ACTUALIZACION);
             
+            jugadorElegido = generarAleatorio(2, 1);
+            
+            //FRECUENCIA DE LANZAMIENTO DE LAS BOLAS
             comienzo = generarAleatorio(10, 0);
-            if (comienzo == 5) {
+            
+            if(jugadorElegido == 1 && comienzo == 5){
                 jugador1.activar();
+            }else if(jugadorElegido == 2 && comienzo == 5){
+                jugador2.activar();
             }
             
             if(System.currentTimeMillis() - referenciaContador > MS_POR_SEGUNDO){
@@ -207,9 +229,10 @@ public class Principal extends Applet implements Runnable {
         return rand.nextInt((max - min) + 1) + min;
     }
 
-    public synchronized static void generarBola() {
+    public synchronized static void generarBola(int codigo) {
         int random = generarAleatorio(10, 1);
         String tipo;
+        Bola b;
         
         switch(random){
             case 1:
@@ -231,7 +254,13 @@ public class Principal extends Applet implements Runnable {
                 tipo = "master";
         }
         
-        Bola b = new Bola(tipo, 50, 500);
+        switch(codigo){
+            case 1:
+                b = new Bola(codigo, tipo, 50, 500, generarAleatorio(30, 15), /*generarAleatorio(40, 20)*/45);
+                break;
+            default:
+                b = new Bola(codigo, tipo, ANCHOVENTAJUEGO-50, 500, generarAleatorio(20, 15), /*generarAleatorio(40, 20)*/45); 
+        }
         ListaBolas.bolas.add(b);
         b.start();
     }

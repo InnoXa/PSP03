@@ -6,12 +6,14 @@ import java.util.ArrayList;
 public class Lanzador extends Thread implements Runnable{
     int x, y, imgActual;
     ArrayList<BufferedImage> imagenes;
+    int codigo;
     boolean activo;
     private volatile Thread hilo;
 
-    public Lanzador(int x, int y, ArrayList<BufferedImage> imagenes) {
+    public Lanzador(int x, int y, int codigo, ArrayList<BufferedImage> imagenes) {
         this.x = x;
         this.y = y;
+        this.codigo = codigo;
         imgActual = 0;
         this.imagenes = imagenes;
         activo = false;
@@ -29,6 +31,10 @@ public class Lanzador extends Thread implements Runnable{
     
     public int getIndiceImg() {
         return imgActual;
+    }
+    
+    public int getCodigo(){
+        return codigo;
     }
     
     public BufferedImage getImgActual() {
@@ -57,7 +63,7 @@ public class Lanzador extends Thread implements Runnable{
                 break;
             case 2:
                 imgActual = 3;
-                Principal.generarBola();
+                Principal.generarBola(getCodigo());
                 break;
             case 3:
                 imgActual = 4;
