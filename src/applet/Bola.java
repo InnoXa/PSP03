@@ -14,6 +14,7 @@ import javax.sound.midi.Receiver;
 public class Bola extends Thread{
     int codigoJugador;
     private BufferedImage imagen;
+    private String tipo;
     private int posX;
     private int posY;
     private int grados;
@@ -31,6 +32,7 @@ public class Bola extends Thread{
 
     public Bola(int codigoJugador, String imagen, int posX, int posY, double velocidad, double inclinacion) {
         this.codigoJugador = codigoJugador;
+        this.tipo = imagen;
         
         try {
             this.imagen = ImageIO.read(new File("src/Imagenes/"+imagen+".png"));
@@ -52,6 +54,14 @@ public class Bola extends Thread{
         return imagen;
     }
 
+    public void invertirVelX() {
+        velX = -velX;
+    }
+
+    public String getTipo(){
+        return tipo;
+    }
+    
     public int getPosX() {
         return posX;
     }
@@ -100,6 +110,7 @@ public class Bola extends Thread{
         if(rebote()){
             velX = -velX;
         }
+      
         
         if(getPosY() > Principal.ALTOVENTAJUEGO - getImg().getHeight()){
             velY /= ((velY - (GRAVEDAD * tiempo / 10000)) - 0.1);
@@ -107,6 +118,8 @@ public class Bola extends Thread{
         
         return !finMovimiento();
     }
+    
+        
     
     public synchronized boolean rebote(){
         Bola b;
@@ -128,7 +141,6 @@ public class Bola extends Thread{
             Principal.vidas--;
             return true;
         }
-        
         return false;
     }
 
