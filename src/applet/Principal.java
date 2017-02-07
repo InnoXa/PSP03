@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.logging.Level;
@@ -47,10 +48,10 @@ public class Principal extends Applet implements Runnable {
     //IMAGEN QUE CONTENDRÁ TODO LO QUE SE DIBUJARÁ EN dobleBuffer
     BufferedImage backBuffer;
 
-    //final int ALTOVENTAJUEGO = 800;
-    //final int ANCHOVENTAJUEGO = 1000;
-    static final int ALTOVENTAJUEGO = 600;
-    static final int ANCHOVENTAJUEGO = 800;
+    static final int ALTOVENTAJUEGO = 800;
+    static final int ANCHOVENTAJUEGO = 1000;
+    //static final int ALTOVENTAJUEGO = 600;
+    //static final int ANCHOVENTAJUEGO = 800;
 
     //Niveles del juego (Del 1 al 3)
     static int nivel = 1;
@@ -185,23 +186,29 @@ public class Principal extends Applet implements Runnable {
             Bola b;
             Iterator<Bola> itb = ListaBolas.bolas.iterator();
             while (itb.hasNext()) {
-                b = itb.next();
+                b = null;
+                
+                try{
+                    b = itb.next();
+                }catch(ConcurrentModificationException cme){
+                    
+                }finally{
+                    double locationX = b.getImg().getWidth() / 2;
+                    double locationY = b.getImg().getHeight() / 2;
 
-                double locationX = b.getImg().getWidth() / 2;
-                double locationY = b.getImg().getHeight() / 2;
+                    rotacion = Math.toRadians(b.getGrados());
 
-                rotacion = Math.toRadians(b.getGrados());
+                    AffineTransform tx = AffineTransform.getRotateInstance(rotacion, locationX, locationY);
+                    AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
 
-                AffineTransform tx = AffineTransform.getRotateInstance(rotacion, locationX, locationY);
-                AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
+                    comprobarEncesta(b);
 
-                comprobarEncesta(b);
+                    reboteLatIzqCesta(b);
 
-                reboteLatIzqCesta(b);
+                    reboteLatDerCesta(b);
 
-                reboteLatDerCesta(b);
-
-                g2d.drawImage(op.filter(b.getImg(), null), b.getPosX(), b.getPosY(), this);
+                    g2d.drawImage(op.filter(b.getImg(), null), b.getPosX(), b.getPosY(), this);
+                }
             }
 
             g2d.drawImage(jugador1.getImgActual(), jugador1.getX(), jugador1.getY(), this);
@@ -328,32 +335,32 @@ public class Principal extends Applet implements Runnable {
                 case 1:
                     switch(tipo){
                         case "poke":
-                            b = new Bola(codigo, tipo, 50, 500, generarAleatorio(29, 15), /*generarAleatorio(40, 20)*/ 45);
+                            b = new Bola(codigo, tipo, 50, ALTOVENTAJUEGO - 100, generarAleatorio(24, 10), /*generarAleatorio(40, 20)*/ 45);
                             break;
                         case "super":
-                            b = new Bola(codigo, tipo, 50, 500, generarAleatorio(29, 20), /*generarAleatorio(40, 20)*/ 45);
+                            b = new Bola(codigo, tipo, 50, ALTOVENTAJUEGO - 100, generarAleatorio(24, 15), /*generarAleatorio(40, 20)*/ 45);
                             break;
                         case "ultra":
-                            b = new Bola(codigo, tipo, 50, 500, generarAleatorio(29, 25), /*generarAleatorio(40, 20)*/ 45);
+                            b = new Bola(codigo, tipo, 50, ALTOVENTAJUEGO - 100, generarAleatorio(24, 20), /*generarAleatorio(40, 20)*/ 45);
                             break;
                         default:
-                            b = new Bola(codigo, tipo, 50, 500, 30, /*generarAleatorio(40, 20)*/ 45);
+                            b = new Bola(codigo, tipo, 50, ALTOVENTAJUEGO - 100, 25, /*generarAleatorio(40, 20)*/ 45);
                             break;
                     }
                     break;
                 default:
                     switch(tipo){
                         case "poke":
-                            b = new Bola(codigo, tipo, ANCHOVENTAJUEGO - 50, 500, generarAleatorio(29, 15), /*generarAleatorio(40, 20)*/ 45);
+                            b = new Bola(codigo, tipo, ANCHOVENTAJUEGO - 50, ALTOVENTAJUEGO - 100, generarAleatorio(24, 10), /*generarAleatorio(40, 20)*/ 45);
                             break;
                         case "super":
-                            b = new Bola(codigo, tipo, ANCHOVENTAJUEGO - 50, 500, generarAleatorio(29, 20), /*generarAleatorio(40, 20)*/ 45);
+                            b = new Bola(codigo, tipo, ANCHOVENTAJUEGO - 50, ALTOVENTAJUEGO - 100, generarAleatorio(24, 15), /*generarAleatorio(40, 20)*/ 45);
                             break;
                         case "ultra":
-                            b = new Bola(codigo, tipo, ANCHOVENTAJUEGO - 50, 500, generarAleatorio(29, 25), /*generarAleatorio(40, 20)*/ 45);
+                            b = new Bola(codigo, tipo, ANCHOVENTAJUEGO - 50, ALTOVENTAJUEGO - 100, generarAleatorio(24, 20), /*generarAleatorio(40, 20)*/ 45);
                             break;
                         default:
-                            b = new Bola(codigo, tipo, ANCHOVENTAJUEGO - 50, 500, 30, /*generarAleatorio(40, 20)*/ 45);
+                            b = new Bola(codigo, tipo, ANCHOVENTAJUEGO - 50, ALTOVENTAJUEGO - 100, 25, /*generarAleatorio(40, 20)*/ 45);
                             break;
                     }
                     break;
