@@ -1,6 +1,5 @@
 package applet;
 
-import java.applet.Applet;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -9,7 +8,6 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import javax.sound.midi.Receiver;
 
 public class Bola extends Thread{
     int codigoJugador;
